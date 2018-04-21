@@ -33,8 +33,8 @@
 
 ## Game Description
 
-The screen features an expressive Pet. The player controls the Trainer on the 
-screen. The Trainer can interact with the Pet by launching objects over to it.
+The screen features an expressive Pet. The player controls the Owner on the 
+screen. The Owner can interact with the Pet by launching objects over to it.
 
 ## Goal
 
@@ -49,7 +49,7 @@ Keep the Pet alive and as happy as possible.
     * Attention
     * Exercise
 
-* Trainer
+* Owner
   * Collects Ammo of several types:
     * Hunger
     * Attention
@@ -58,13 +58,19 @@ Keep the Pet alive and as happy as possible.
 
 * UI
   * Icon to show Pet's overall happiness
-  * Show Trainer's Ammo levels
+  * Show Owner's Ammo levels
   * Timer (Pet lifetime)
   * Save/Load button
 
-* Level
-  * Large open screen in a top-down view.
-  * Maze-like layout: Obstacles in the way of Pet.
+* Scenes
+  * Title
+    * New game button
+    * Load game button
+  * Level
+    * Large open screen in a top-down view.
+    * Maze-like layout: Obstacles in the way of Pet.
+    * Obstacles: Rock (impassable), Fence (Bullet-passable), Bush (Character-passable)
+  * Game Over
 
 ## Actions
 

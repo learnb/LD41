@@ -21,14 +21,14 @@ import (
 	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten"
-	rblocks "github.com/hajimehoshi/ebiten/examples/resources/images/blocks"
+	rshootepet "github.com/learnb/ld41/resources/images/shootepet"
 	"github.com/hajimehoshi/ebiten/inpututil"
 )
 
 var imageBackground *ebiten.Image
 
 func init() {
-	img, _, err := image.Decode(bytes.NewReader(rblocks.Background_png))
+	img, _, err := image.Decode(bytes.NewReader(rshootepet.Title_png))
 	if err != nil {
 		panic(err)
 	}
@@ -51,11 +51,11 @@ func anyGamepadAbstractButtonPressed(i *Input) bool {
 func (s *TitleScene) Update(state *GameState) error {
 	s.count++
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		state.SceneManager.GoTo(NewGameScene())
+		//state.SceneManager.GoTo(NewGameScene())
 		return nil
 	}
 	if anyGamepadAbstractButtonPressed(state.Input) {
-		state.SceneManager.GoTo(NewGameScene())
+		//state.SceneManager.GoTo(NewGameScene())
 		return nil
 	}
 
@@ -69,8 +69,9 @@ func (s *TitleScene) Update(state *GameState) error {
 }
 
 func (s *TitleScene) Draw(r *ebiten.Image) {
+        //ebitenutil.DebugPrint(r, "\nGO")
 	s.drawTitleBackground(r, s.count)
-	drawLogo(r, "BLOCKS")
+	drawLogo(r, "Shoot 'E' Pet")
 
 	message := "PRESS SPACE TO START"
 	x := 0

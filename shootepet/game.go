@@ -15,7 +15,6 @@
 package shootepet
 
 import (
-        "github.com/learnb/ld41"
         "github.com/hajimehoshi/ebiten"
 )
 
