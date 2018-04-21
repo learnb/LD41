@@ -25,6 +25,7 @@ type virtualGamepadButton int
 const (
 	virtualGamepadButtonLeft virtualGamepadButton = iota
 	virtualGamepadButtonRight
+	virtualGamepadButtonUp
 	virtualGamepadButtonDown
 	virtualGamepadButtonButtonA
 	virtualGamepadButtonButtonB
@@ -33,6 +34,7 @@ const (
 var virtualGamepadButtons = []virtualGamepadButton{
 	virtualGamepadButtonLeft,
 	virtualGamepadButtonRight,
+	virtualGamepadButtonUp,
 	virtualGamepadButtonDown,
 	virtualGamepadButtonButtonA,
 	virtualGamepadButtonButtonB,

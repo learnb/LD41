@@ -21,8 +21,8 @@ import (
 	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten"
-	rshootepet "github.com/learnb/ld41/resources/images/shootepet"
 	"github.com/hajimehoshi/ebiten/inpututil"
+	rshootepet "github.com/learnb/ld41/resources/images/shootepet"
 )
 
 var imageBackground *ebiten.Image
@@ -51,11 +51,11 @@ func anyGamepadAbstractButtonPressed(i *Input) bool {
 func (s *TitleScene) Update(state *GameState) error {
 	s.count++
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		//state.SceneManager.GoTo(NewGameScene())
+		state.SceneManager.GoTo(NewGameScene())
 		return nil
 	}
 	if anyGamepadAbstractButtonPressed(state.Input) {
-		//state.SceneManager.GoTo(NewGameScene())
+		state.SceneManager.GoTo(NewGameScene())
 		return nil
 	}
 
@@ -69,11 +69,10 @@ func (s *TitleScene) Update(state *GameState) error {
 }
 
 func (s *TitleScene) Draw(r *ebiten.Image) {
-        //ebitenutil.DebugPrint(r, "\nGO")
 	s.drawTitleBackground(r, s.count)
-	drawLogo(r, "Shoot 'E' Pet")
+	drawLogo(r, "Shoot-E-Pet")
 
-	message := "PRESS SPACE TO START"
+	message := "Press FIRE to start!"
 	x := 0
 	y := ScreenHeight - 48
 	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)

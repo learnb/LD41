@@ -2,7 +2,8 @@
 
 ## Coding
 
-* Title scene
+* ~~Scene transitions~~
+* ~~Title scene~~
 * Game over scene
 * Level scene
   * Tile map

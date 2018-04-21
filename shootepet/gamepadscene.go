@@ -83,15 +83,17 @@ func (s *GamepadScene) Draw(screen *ebiten.Image) {
 (PRESS ESC TO CANCEL)
 
 
-MOVE LEFT:    %s
+Move Left:     %s
 
-MOVE RIGHT:   %s
+Move Right:    %s
 
-DROP:         %s
+Move Up:       %s
 
-ROTATE LEFT:  %s
+Move Down:     %s
 
-ROTATE RIGHT: %s
+Fire Weapon:   %s
+
+Change Weapon: %s
 
 
 
@@ -100,6 +102,6 @@ ROTATE RIGHT: %s
 	if s.currentIndex == len(virtualGamepadButtons) {
 		msg = "OK!"
 	}
-	str := fmt.Sprintf(f, s.buttonStates[0], s.buttonStates[1], s.buttonStates[2], s.buttonStates[3], s.buttonStates[4], msg)
+	str := fmt.Sprintf(f, s.buttonStates[0], s.buttonStates[1], s.buttonStates[2], s.buttonStates[3], s.buttonStates[4], s.buttonStates[5], msg)
 	drawTextWithShadow(screen, str, 16, 16, 1, color.White)
 }
