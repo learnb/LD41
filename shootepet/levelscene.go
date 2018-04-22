@@ -22,18 +22,24 @@ import (
 	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	//"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	rshootepet "github.com/learnb/ld41/resources/images/shootepet"
 )
 
+/* Definitions & Initialization */
+
 var (
     tilesImage *ebiten.Image
-    ownerImage *ebiten.Image
-    petImage *ebiten.Image
+    pet *Entity
+    owner *Entity
 )
 
 func init() {
+        /* Create Characters */
+        pet = &Entity{x: 32*12, y: 32*1, resoures: [3]float32{0.0, 0.0, 0.0}}
+        owner = &Entity{x: 32*5, y: 32*5, resoures: [3]float32{0.0, 0.0, 0.0}}
+
         /* Preload Sprites */
 	img, _, err := image.Decode(bytes.NewReader(rshootepet.Tiles_png))
 	if err != nil {
@@ -45,18 +51,22 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	ownerImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+	owner.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        owner.setSizeByImage()
 
         img, _, err = image.Decode(bytes.NewReader(rshootepet.Pet_png))
 	if err != nil {
 		panic(err)
 	}
-	petImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+	pet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        pet.setSizeByImage()
 }
 
 type LevelScene struct {
 	count int
 }
+
+// Map Info
 
 const (
         tileSize = 32
@@ -79,7 +89,7 @@ var (
                     10, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 10,
                 },
                 /* Second Layer - Top */
-                {
+               /* {
                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -90,7 +100,7 @@ var (
                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                },
+                },*/
         }
         tileprops = [][]int{ /* ints represent tile property booleans */
                 /* Tile properties:
@@ -114,36 +124,78 @@ var (
         }
 )
 
-var (
-    ownX = 32*5
-    ownY = 32*7
-    petX = 32*11
-    petY = 32*1
-)
+/* Update */
 
 func (s *LevelScene) Update(state *GameState) error {
-        if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+        if state.Input.TriggeredSecondary() {
                 state.SceneManager.GoTo(&GameOverScene{})
                 return nil
         }
         if state.Input.TriggeredMain() {
+                pet.moveToCell(1,1)
+                return nil
+        }
+
+        // update owner
+        s.updateOwner(state)
+
+        // update pet
+        s.updatePet(state)
+
+        // check collision
+        if owner.doesCollideWith(pet) {
                 state.SceneManager.GoTo(&GameOverScene{})
                 return nil
         }
 
+	return nil
+}
+
+func (s *LevelScene) updateOwner(state *GameState) error {
         if state.Input.StateForUp() > 0 {
-                ownY -= 3
+                owner.y -= 3
         }
         if state.Input.StateForDown() > 0 {
-                ownY += 3
+                owner.y += 3
         }
         if state.Input.StateForLeft() > 0 {
-                ownX -= 3
+                owner.x -= 3
         }
         if state.Input.StateForRight() > 0 {
-                ownX += 3
+                owner.x += 3
         }
-	return nil
+
+        return nil
+}
+
+
+func (s *LevelScene) updatePet(state *GameState) error {
+        pet.x -= 1
+        pet.y += 1
+
+        return nil
+}
+
+/* Draw */
+
+func (s *LevelScene) Draw(r *ebiten.Image) {
+        /* Debug */
+        ebitenutil.DebugPrint(r, "\nNothing here yet :(")
+	message := "~ Level Scene ~"
+	x := 0
+	y := ScreenHeight - 48
+	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
+
+        /* Draw Map */
+        s.drawMap(r)
+
+        /* Draw Characters */
+        s.drawChars(r)
+
+	message = fmt.Sprintf("Dist: %0.2f", owner.distanceTo(pet))
+	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
+
+        ebitenutil.DebugPrint(r, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
 }
 
 func (s *LevelScene) drawMap(r *ebiten.Image) {
@@ -164,30 +216,17 @@ func (s *LevelScene) drawMap(r *ebiten.Image) {
 
 func (s *LevelScene) drawChars(r *ebiten.Image) {
         op := &ebiten.DrawImageOptions{}
-        op.GeoM.Translate(float64(ownX), float64(ownY))
-        r.DrawImage(ownerImage, op)
+        //x, y := owner.pos()
+        //op.GeoM.Translate(float64(x), float64(y))
+        op.GeoM.Translate(owner.posf())
+        r.DrawImage(owner.image, op)
 
         op = &ebiten.DrawImageOptions{}
-        op.GeoM.Translate(float64(petX), float64(petY))
-        r.DrawImage(petImage, op)
+        op.GeoM.Translate(float64(pet.x), float64(pet.y))
+        r.DrawImage(pet.image, op)
 }
 
-func (s *LevelScene) Draw(r *ebiten.Image) {
-        /* Debug */
-        ebitenutil.DebugPrint(r, "\nNothing here yet :(")
-	message := "~ Level Scene ~"
-	x := 0
-	y := ScreenHeight - 48
-	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
-
-        /* Draw Map */
-        s.drawMap(r)
-
-        /* Draw Characters */
-        s.drawChars(r)
-
-        ebitenutil.DebugPrint(r, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
-}
+/* Other */
 
 func NewGameScene() *LevelScene {
         return &LevelScene{

@@ -7,11 +7,9 @@
 * Game over scene
 * Level scene
   * ~~Tile map~~
-    * Tiles have properties~
-      * Character passable boolean
-      * Bullet passable boolean
-      * Render layer ordering number
+    * ~~Tiles have passable properties~~
   * ~~Contains Pet & Owner~~
+  * ~~Collision detection~~
 * Pet~
   * Automatic movement
   * Dynamic desires (3 types: H, A, E)
@@ -19,7 +17,7 @@
 * Owner~
   * ~~User movement~~
   * User shooting
-  * Ammo inventory (3 types: H, A, E)
+  * ~~Ammo inventory (3 types: H, A, E)~~
   * Collect Ammo
   * Switch weapon
 * UI
