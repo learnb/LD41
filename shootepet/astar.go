@@ -181,7 +181,7 @@ func (g *Graph) getNeighbors(cell int) ([4]int) {
     if neigh[1] != -1 && g.graph[neigh[1]] != 0 { // non-zero means impassable
         neigh[1] = -1
     }
-    if neigh[2] != -1 && g.graph[neigh[3]] != 0 { // non-zero means impassable
+    if neigh[2] != -1 && g.graph[neigh[2]] != 0 { // non-zero means impassable
         neigh[2] = -1
     }
     if neigh[3] != -1 && g.graph[neigh[3]] != 0 { // non-zero means impassable

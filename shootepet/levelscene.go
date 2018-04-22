@@ -72,7 +72,7 @@ func init() {
 
 
         /* Get Pet moving */
-        petPath = makeNewPetPath(0, 0)
+        petPath = makeNewPetPath(0, 0) //Test inital fails safely
         x, y := mapGraph.Indx2Coord(petTarget)
         fmt.Printf("Pet target: (%d, %d)\n", x,y)
         for _, v := range petPath {
@@ -107,9 +107,9 @@ var (
                     9, 5, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 9,
                     9, 5, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 9,
                     9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    1, 1, 1, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    9, 5, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    9, 9, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+                    1, 1, 1, 1, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 9,
+                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
+                    9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
                 },
                 /* Second Layer - Top */
                /* {
@@ -139,9 +139,9 @@ var (
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 }
         collisionMap = map[int]bool{}
 )
@@ -293,7 +293,9 @@ func makeNewPetPath(dstX, dstY int) []int {
     px, py := pet.pos()
     cx, cy := Point2MapCell(px, py)
     l := mapGraph.Astar( mapGraph.Coord2Indx(cx, cy), mapGraph.Coord2Indx(dstX, dstY) )
-    _, l = l[len(l)-1], l[:len(l)-1]            // pop src (current) node
+    if len(l) >= 1 {
+        _, l = l[len(l)-1], l[:len(l)-1]            // pop src (current) node
+    }
     if len(l) >= 1 {
         petTarget, l = l[len(l)-1], l[:len(l)-1]    // pop & set next node
     }
