@@ -36,6 +36,10 @@ func init() {
 	gameoverImageBackground, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
 }
 
+func (s *GameOverScene) Init() {
+    //init()
+}
+
 type GameOverScene struct {
 	count int
 }

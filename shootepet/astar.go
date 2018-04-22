@@ -40,7 +40,7 @@ func (g *Graph) Coord2Indx(x, y int) (int) {
         return (y * g.xMax) + x
 }
 
-func (g *Graph) gPrint() {
+func (g *Graph) Print() {
     for i, _ := range g.graph {
         sx, sy := g.Indx2Coord(i)
         print(fmt.Sprintf("(%d, %d)", sx, sy))
@@ -50,7 +50,10 @@ func (g *Graph) gPrint() {
     }
 }
 
-func (g *Graph) gAstar(src int, dst int) []int {
+func (g *Graph) Astar(src int, dst int) []int {
+    if g.graph == nil {
+        return nil
+    }
     //sx, sy := gIndx2Coord(i)
 
     // init open and closed lists
@@ -172,16 +175,16 @@ func (g *Graph) getNeighbors(cell int) ([4]int) {
     }
 
     // impassable tile check
-    if g.graph[neigh[0]] != 0 { // non-zero means impassable
+    if neigh[0] != -1 && g.graph[neigh[0]] != 0 { // non-zero means impassable
         neigh[0] = -1
     }
-    if g.graph[neigh[1]] != 0 { // non-zero means impassable
+    if neigh[1] != -1 && g.graph[neigh[1]] != 0 { // non-zero means impassable
         neigh[1] = -1
     }
-    if g.graph[neigh[3]] != 0 { // non-zero means impassable
+    if neigh[2] != -1 && g.graph[neigh[3]] != 0 { // non-zero means impassable
         neigh[2] = -1
     }
-    if g.graph[neigh[3]] != 0 { // non-zero means impassable
+    if neigh[3] != -1 && g.graph[neigh[3]] != 0 { // non-zero means impassable
         neigh[3] = -1
     }
 

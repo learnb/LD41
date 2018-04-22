@@ -35,6 +35,10 @@ func init() {
 	imageBackground, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
 }
 
+func (s *TitleScene) Init() {
+    //init()
+}
+
 type TitleScene struct {
 	count int
 }

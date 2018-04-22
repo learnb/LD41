@@ -74,28 +74,28 @@ func (i *Input) TriggeredSecondary() bool {
 }
 
 func (i *Input) StateForLeft() int {
-        if v := inpututil.KeyPressDuration(ebiten.KeyLeft); 0 < v {
+        if v := inpututil.KeyPressDuration(ebiten.KeyA); 0 < v {
                 return v
         }
         return i.stateForVirtualGamepadButton(virtualGamepadButtonLeft)
 }
 
 func (i *Input) StateForRight() int {
-        if v := inpututil.KeyPressDuration(ebiten.KeyRight); 0 < v {
+        if v := inpututil.KeyPressDuration(ebiten.KeyD); 0 < v {
                 return v
         }
         return i.stateForVirtualGamepadButton(virtualGamepadButtonRight)
 }
 
 func (i *Input) StateForUp() int {
-        if v := inpututil.KeyPressDuration(ebiten.KeyUp); 0 < v {
+        if v := inpututil.KeyPressDuration(ebiten.KeyW); 0 < v {
                 return v
         }
         return i.stateForVirtualGamepadButton(virtualGamepadButtonUp)
 }
 
 func (i *Input) StateForDown() int {
-        if v := inpututil.KeyPressDuration(ebiten.KeyDown); 0 < v {
+        if v := inpututil.KeyPressDuration(ebiten.KeyS); 0 < v {
                 return v
         }
         return i.stateForVirtualGamepadButton(virtualGamepadButtonDown)

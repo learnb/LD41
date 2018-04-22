@@ -15,6 +15,7 @@
 package shootepet
 
 import (
+//        "fmt"
         "math"
 	"github.com/hajimehoshi/ebiten"
 )
@@ -22,9 +23,10 @@ import (
 
 type Entity struct {
     image *ebiten.Image
-    x, y int
     w, h int
-    resoures [3]float32
+    x, y float64
+    speed float64
+    resoures [3]float64
 }
 
 func (e *Entity) setSizeByImage() {
@@ -37,35 +39,66 @@ func (e *Entity) size() (int, int) {
     return e.w, e.h
 }
 
-func (e *Entity) pos() (int, int) {
+func (e *Entity) posInt() (int, int) {
+    return int(e.x), int(e.y)
+}
+
+func (e *Entity) pos() (float64, float64) {
     return e.x, e.y
 }
 
-func (e *Entity) posf() (float64, float64) {
-    return float64(e.x), float64(e.y)
+func (e *Entity) centerPos() (float64, float64) {
+    return e.x+float64(e.w)/2, e.y+float64(e.h)/2
 }
 
-func (e *Entity) centerPos() (int, int) {
-    return e.x+e.w/2, e.y+e.h/2
-}
-
-func (e *Entity) centerPosf() (float64, float64) {
-    x := float64(e.x)
-    y := float64(e.y)
-    w := float64(e.w)
-    h := float64(e.h)
+func (e *Entity) centerPosInt() (int, int) {
+    x := int(e.x)
+    y := int(e.y)
+    w := int(e.w)
+    h := int(e.h)
     return x+w/2, y+h/2
 }
 
-func (e *Entity) moveToCell(cX, cY int) {
-    e.x = cX * tileSize
-    e.y = cY * tileSize
+func (e *Entity) moveTowardCell(cX, cY int) {
+    x := float64(cX * tileSize)
+    y := float64(cY * tileSize)
+    e.moveTowardPoint(x,y)
+}
 
+func (e *Entity) moveTowardPoint(cX, cY float64) {
+    dx := cX - e.x
+    dy := cY - e.y
+
+    d := math.Sqrt( math.Pow((dx),2) + math.Pow((dy),2) )
+    if d < 0.2 {
+        d = 0.2
+    }
+    normedX := dx / d
+    normedY := dy / d
+
+    e.x += normedX * e.speed //time delta?
+    e.y += normedY * e.speed
+}
+
+func (e *Entity) isAtPoint(cX, cY float64) bool {
+    d := dist(e.x, e.y, cX, cY)
+    if d < 2.0 {
+        return true
+    }
+    return false
+}
+
+func (e *Entity) isAtCell(cX, cY int) bool {
+    d := dist(e.x, e.y, float64(cX * tileSize), float64(cY * tileSize))
+    if d < 2.0 {
+        return true
+    }
+    return false
 }
 
 func (e *Entity) doesCollideWith(a *Entity) bool {
-    x1, y1 := e.centerPosf()
-    x2, y2 := a.centerPosf()
+    x1, y1 := e.centerPos()
+    x2, y2 := a.centerPos()
     if dist(x1, y1, x2, y2) <= float64(e.w){
         return true
     }
@@ -77,7 +110,7 @@ func dist(x1, y1, x2, y2 float64) float64 {
 }
 
 func (e *Entity) distanceTo(a *Entity) float64 {
-    x1, y1 := e.centerPosf()
-    x2, y2 := a.centerPosf()
+    x1, y1 := e.centerPos()
+    x2, y2 := a.centerPos()
     return dist(x1, y1, x2, y2)
 }

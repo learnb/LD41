@@ -29,6 +29,11 @@ type GamepadScene struct {
 	buttonStates      []string
 }
 
+func (s *GamepadScene) Init() {
+        //
+}
+
+
 func (s *GamepadScene) Update(state *GameState) error {
 	if s.currentIndex == 0 {
 		state.Input.gamepadConfig.Reset()

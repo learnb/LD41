@@ -31,6 +31,7 @@ func init() {
 }
 
 type Scene interface {
+	Init()
 	Update(state *GameState) error
 	Draw(screen *ebiten.Image)
 }

@@ -16,6 +16,7 @@ package shootepet
 
 import (
         "fmt"
+        "math/rand"
 	"bytes"
 	"image"
 	"image/color"
@@ -33,12 +34,17 @@ var (
     tilesImage *ebiten.Image
     pet *Entity
     owner *Entity
+    mapGraph *Graph
+    petPath []int
+    petTarget int
 )
+
+
 
 func init() {
         /* Create Characters */
-        pet = &Entity{x: 32*12, y: 32*1, resoures: [3]float32{0.0, 0.0, 0.0}}
-        owner = &Entity{x: 32*5, y: 32*5, resoures: [3]float32{0.0, 0.0, 0.0}}
+        pet = &Entity{x: 32*12, y: 32*1, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 3.0}
+        owner = &Entity{x: 32*5, y: 32*5, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 1.5}
 
         /* Preload Sprites */
 	img, _, err := image.Decode(bytes.NewReader(rshootepet.Tiles_png))
@@ -62,7 +68,21 @@ func init() {
         pet.setSizeByImage()
 
         /* Define Graph */
-        
+        mapGraph = &Graph{graph: tileprops, xMax: 15, yMax: 10}
+
+
+        /* Get Pet moving */
+        petPath = makeNewPetPath(0, 0)
+        x, y := mapGraph.Indx2Coord(petTarget)
+        fmt.Printf("Pet target: (%d, %d)\n", x,y)
+        for _, v := range petPath {
+            x, y := mapGraph.Indx2Coord(v)
+            fmt.Printf("(%d, %d)\n", x,y)
+        }
+}
+
+func  (s *LevelScene) Init() {
+    //ebiten.init() //TODO have Scenes implement Init func so they can be called again
 }
 
 type LevelScene struct {
@@ -138,12 +158,15 @@ func buildPropMap() {
 /* Update */
 
 func (s *LevelScene) Update(state *GameState) error {
+        // check of game over
         if state.Input.TriggeredSecondary() {
                 state.SceneManager.GoTo(&GameOverScene{})
                 return nil
         }
+
+
         if state.Input.TriggeredMain() {
-                pet.moveToCell(1,1)
+                pet.moveTowardCell(1,1)
                 return nil
         }
 
@@ -152,7 +175,6 @@ func (s *LevelScene) Update(state *GameState) error {
 
         // update pet
         s.updatePet(state)
-
         // check collision
         if owner.doesCollideWith(pet) {
                 state.SceneManager.GoTo(&GameOverScene{})
@@ -163,26 +185,42 @@ func (s *LevelScene) Update(state *GameState) error {
 }
 
 func (s *LevelScene) updateOwner(state *GameState) error {
+        targetX, targetY := owner.pos()
+
         if state.Input.StateForUp() > 0 {
-                owner.y -= 3
+                targetY -= owner.speed
         }
         if state.Input.StateForDown() > 0 {
-                owner.y += 3
+                targetY += owner.speed
         }
         if state.Input.StateForLeft() > 0 {
-                owner.x -= 3
+                targetX -= owner.speed
         }
         if state.Input.StateForRight() > 0 {
-                owner.x += 3
+                targetX += owner.speed
         }
+
+        owner.moveTowardPoint(targetX, targetY)
 
         return nil
 }
 
 
 func (s *LevelScene) updatePet(state *GameState) error {
-        pet.x -= 1
-        pet.y += 1
+        px, py := mapGraph.Indx2Coord(petTarget)
+        pet.moveTowardCell(px, py)
+
+        if pet.isAtCell(px, py) {
+              // pop next cell from petPath
+              if len(petPath) >= 1 {
+                  petTarget, petPath = petPath[len(petPath)-1], petPath[:len(petPath)-1]
+              } else { // make new path
+                  // find new random destination
+                  dx, dy := rand.Intn(mapGraph.xMax-1), rand.Intn(mapGraph.yMax-1)
+                  fmt.Printf("New Point: (%d, %d)\n", dx, dy)
+                  petPath = makeNewPetPath(dx, dy)
+              }
+        }
 
         return nil
 }
@@ -229,7 +267,7 @@ func (s *LevelScene) drawChars(r *ebiten.Image) {
         op := &ebiten.DrawImageOptions{}
         //x, y := owner.pos()
         //op.GeoM.Translate(float64(x), float64(y))
-        op.GeoM.Translate(owner.posf())
+        op.GeoM.Translate(owner.pos())
         r.DrawImage(owner.image, op)
 
         op = &ebiten.DrawImageOptions{}
@@ -245,3 +283,19 @@ func NewGameScene() *LevelScene {
         }
 }
 
+func Point2MapCell(x, y float64) (int, int) {
+    cX := int(x/tileSize)
+    cY := int(y/tileSize)
+    return cX, cY
+}
+
+func makeNewPetPath(dstX, dstY int) []int {
+    px, py := pet.pos()
+    cx, cy := Point2MapCell(px, py)
+    l := mapGraph.Astar( mapGraph.Coord2Indx(cx, cy), mapGraph.Coord2Indx(dstX, dstY) )
+    _, l = l[len(l)-1], l[:len(l)-1]            // pop src (current) node
+    if len(l) >= 1 {
+        petTarget, l = l[len(l)-1], l[:len(l)-1]    // pop & set next node
+    }
+    return l
+}
