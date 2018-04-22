@@ -40,7 +40,7 @@ var virtualGamepadButtons = []virtualGamepadButton{
 	virtualGamepadButtonButtonB,
 }
 
-const axisThreshold = 0.75
+const axisThreshold = 0.65
 
 type axis struct {
 	id       int

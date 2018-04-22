@@ -6,18 +6,18 @@
 * ~~Title scene~~
 * Game over scene
 * Level scene
-  * Tile map
-    * Tiles have properties
+  * ~~Tile map~~
+    * Tiles have properties~
       * Character passable boolean
       * Bullet passable boolean
       * Render layer ordering number
-  * Contains Pet & Owner
-* Pet
+  * ~~Contains Pet & Owner~~
+* Pet~
   * Automatic movement
   * Dynamic desires (3 types: H, A, E)
   * 'Express' emotion (via UI icon)
-* Owner
-  * User movement
+* Owner~
+  * ~~User movement~~
   * User shooting
   * Ammo inventory (3 types: H, A, E)
   * Collect Ammo

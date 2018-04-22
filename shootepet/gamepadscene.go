@@ -82,6 +82,10 @@ func (s *GamepadScene) Draw(screen *ebiten.Image) {
 	f := `GAMEPAD CONFIGURATION
 (PRESS ESC TO CANCEL)
 
+* Joysticks don't work well for movement right now :(
+  Please use the D-pad or non-analog buttons
+  Sorry!!
+
 
 Move Left:     %s
 

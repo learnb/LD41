@@ -59,18 +59,18 @@ func (i *Input) Update() {
         }
 }
 
-func (i *Input) IsRotateRightJustPressed() bool {
+func (i *Input) TriggeredMain() bool {
         if inpututil.IsKeyJustPressed(ebiten.KeySpace) || inpututil.IsKeyJustPressed(ebiten.KeyX) {
                 return true
         }
-        return i.stateForVirtualGamepadButton(virtualGamepadButtonButtonB) == 1
+        return i.stateForVirtualGamepadButton(virtualGamepadButtonButtonA) == 1
 }
 
-func (i *Input) IsRotateLeftJustPressed() bool {
-        if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+func (i *Input) TriggeredSecondary() bool {
+        if inpututil.IsKeyJustPressed(ebiten.KeyE) {
                 return true
         }
-        return i.stateForVirtualGamepadButton(virtualGamepadButtonButtonA) == 1
+        return i.stateForVirtualGamepadButton(virtualGamepadButtonButtonB) == 1
 }
 
 func (i *Input) StateForLeft() int {
@@ -85,6 +85,13 @@ func (i *Input) StateForRight() int {
                 return v
         }
         return i.stateForVirtualGamepadButton(virtualGamepadButtonRight)
+}
+
+func (i *Input) StateForUp() int {
+        if v := inpututil.KeyPressDuration(ebiten.KeyUp); 0 < v {
+                return v
+        }
+        return i.stateForVirtualGamepadButton(virtualGamepadButtonUp)
 }
 
 func (i *Input) StateForDown() int {
