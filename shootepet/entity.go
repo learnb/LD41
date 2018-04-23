@@ -15,7 +15,7 @@
 package shootepet
 
 import (
-        "fmt"
+//        "fmt"
         "math"
 	"github.com/hajimehoshi/ebiten"
 )
@@ -107,7 +107,7 @@ func (e *Entity) moveByVecComponents(cX, cY float64) {
 
 func (e *Entity) isAtPoint(cX, cY float64) bool {
     d := dist(e.x, e.y, cX, cY)
-    fmt.Printf("d: %0.2f\n", d)
+//    fmt.Printf("d: %0.2f\n", d)
     if d < 10.0 {
         return true
     }

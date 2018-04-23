@@ -38,7 +38,8 @@ var (
     petPath []int
     petTarget int
     emotion int /* 0: Blissful -> 3: Woeful */
-    petBall bool
+    petBall bool // is pet playing ball
+    ballLanded bool // is ball on the ground
 
     owner *Entity
 
@@ -55,6 +56,7 @@ func init() {
         pet = &Entity{x: 32*12, y: 32*1, resources: [3]float64{0.0, 0.0, 0.0}, speed: 3.0}
         emotion = 1 // start happy
         petBall = false
+        ballLanded = false
 
         owner = &Entity{x: 32*5, y: 32*5, resources: [3]float64{0.0, 0.0, 0.0}, speed: 1.5}
         activeWeapon = 0
@@ -303,12 +305,19 @@ func (s *LevelScene) updateOwner(state *GameState) error {
 
 func (s *LevelScene) updatePet(state *GameState) error {
         px, py := mapGraph.Indx2Coord(petTarget)
+       // if ballLanded {
+       //     ballLanded = false
+       //     petBall = true
+       //     fmt.Printf("Play Ball!\n")
+       // }
 
         // movement
-        if petBall {    // chase ball
+        if ballLanded {    // chase ball
+            ballLanded = false
             bx, by := eBullet.ent.cellPos()
+            fmt.Printf("Pet Ball: making path\n")
             petPath = makeNewPetPath(bx, by)            // make path to ball
-            petBall = false         // done until ball found to despawned
+            petBall = true         // done until ball found or despawned
             px, py := mapGraph.Indx2Coord(petTarget)
             pet.moveTowardCell(px, py)
         } else {        // random movement
@@ -336,6 +345,7 @@ func (s *LevelScene) updatePet(state *GameState) error {
         }
         if pet.doesCollideWith(&eBullet.ent) {       // retreived ball
             eBullet.active = false
+            petBall = false
         }
 
 
@@ -395,9 +405,12 @@ func (s *LevelScene) updateBullets(state *GameState) error {
                         }
                     }
                 }
-                petBall = true  // signal after landing
+                if !petBall {   // if active & at target & not started petBall yet
+                    ballLanded = true  // signal landing
+                    fmt.Printf("Ball has landed\n")
+                }
 
-                eBullet.count -= 1
+                eBullet.count -= 1    // at target so countdown to despawn
                 if eBullet.count <= 0 {   // despawned; clear
                     eBullet.active = false
                     eBullet.ent.x, eBullet.ent.y = owner.centerPos()
@@ -571,7 +584,6 @@ func FireAt(x, y int) {
     case 2:
         eBullet.target[0] = float64(x)
         eBullet.target[1] = float64(y)
-        eBullet.vec[0], eBullet.vec[1] = eBullet.ent.getVecComponents(eBullet.target[0], eBullet.target[1])
         eBullet.count = 100     //set despawn counter
         eBullet.active = true
     }
