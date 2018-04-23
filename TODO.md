@@ -4,15 +4,15 @@
 
 * ~~Scene transitions~~
 * ~~Title scene~~
-* Game over scene~
+* ~~Game over scene~~
 * ~~Level scene~~
   * ~~Tile map~~
     * ~~Tiles have passable properties~~
   * ~~Contains Pet & Owner~~
   * ~~Collision detection~~
-* Pet~
+* ~~Pet~~
   * ~~Automatic movement~~
-  * Dynamic desires (3 types: H, A, E)
+  * ~~Dynamic desires (3 types: H, A, E)~~
   * X--'Express' emotion (via UI icon)--X
   * 'Express' emotion (via Sprite)
 * ~~Owner~~

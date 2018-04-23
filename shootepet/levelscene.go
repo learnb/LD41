@@ -31,6 +31,7 @@ import (
 /* Definitions & Initialization */
 
 var (
+    uiSqr *ebiten.Image
     tilesImage *ebiten.Image
     mapGraph *Graph
 
@@ -38,6 +39,7 @@ var (
     petPath []int
     petTarget int
     emotion int /* 0: Blissful -> 3: Woeful */
+    desireRate [3]float64
     petBall bool // is pet playing ball
     ballLanded bool // is ball on the ground
 
@@ -49,11 +51,14 @@ var (
     activeWeapon int
 )
 
-
-
 func init() {
+    myInit()
+}
+
+func myInit() {
         /* Create Characters */
-        pet = &Entity{x: 32*12, y: 32*1, resources: [3]float64{0.0, 0.0, 0.0}, speed: 3.0}
+        pet = &Entity{x: 32*12, y: 32*1, resources: [3]float64{1.0, 1.0, 1.0}, speed: 3.0}
+        desireRate = [3]float64{0.001, 0.001, 0.001}
         emotion = 1 // start happy
         petBall = false
         ballLanded = false
@@ -105,6 +110,9 @@ func init() {
 	pet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
         pet.setSizeByImage()
 
+        // UI
+        uiSqr, _ = ebiten.NewImage(65, 35, ebiten.FilterDefault)
+
         // Hunger Bullet
         img, _, err = image.Decode(bytes.NewReader(rshootepet.Bullet_png))
 	if err != nil {
@@ -142,10 +150,10 @@ func init() {
         //x, y := mapGraph.Indx2Coord(petTarget)
         //fmt.Printf("Pet target: (%d, %d)\n", x,y)
         //fmt.Printf("path length: %d\n", len(petPath))
-        for _, v := range petPath {
-            x, y := mapGraph.Indx2Coord(v)
-            fmt.Printf("(%d, %d)\n", x,y)
-        }
+        //for _, v := range petPath {
+        //    x, y := mapGraph.Indx2Coord(v)
+        //    fmt.Printf("(%d, %d)\n", x,y)
+        //}
 
         // test pathfinding impassable
         //testl := mapGraph.getNeighbors(1)
@@ -226,11 +234,18 @@ func buildTileProps() []int {
 /* Update */
 
 func (s *LevelScene) Update(state *GameState) error {
-        // check of game over
+        // check for slow rendering
+        if ebiten.IsRunningSlowly(){
+            return nil    // Skip
+        }
+
+        // check for game over
+        if emotion == 4 {
         //if state.Input.TriggeredSecondary() {
-        //        state.SceneManager.GoTo(&GameOverScene{})
-        //        return nil
-        //}
+                state.SceneManager.GoTo(&GameOverScene{})
+                myInit()
+                return nil
+        }
 
 
         //if state.Input.TriggeredMain() {
@@ -333,17 +348,12 @@ func (s *LevelScene) updateOwner(state *GameState) error {
 
 func (s *LevelScene) updatePet(state *GameState) error {
         px, py := mapGraph.Indx2Coord(petTarget)
-       // if ballLanded {
-       //     ballLanded = false
-       //     petBall = true
-       //     fmt.Printf("Play Ball!\n")
-       // }
 
         // movement
         if ballLanded {    // chase ball
             ballLanded = false
             bx, by := eBullet.ent.cellPos()
-            fmt.Printf("Pet Ball: making path\n")
+            //fmt.Printf("Pet Ball: making path\n")
             petPath = makeNewPetPath(bx, by)            // make path to ball
             petBall = true         // done until ball found or despawned
             px, py := mapGraph.Indx2Coord(petTarget)
@@ -365,29 +375,67 @@ func (s *LevelScene) updatePet(state *GameState) error {
         }
 
         // collision
-        if pet.doesCollideWith(&hBullet.ent) {       // retreived ball
+        if pet.doesCollideWith(&hBullet.ent) {       // food get
+            pet.resources[0] += desireRate[0]*1000
             hBullet.active = false
         }
-        if pet.doesCollideWith(&aBullet.ent) {       // retreived ball
+        if pet.doesCollideWith(&aBullet.ent) {       // love get
+            pet.resources[1] += desireRate[1]*1000
             aBullet.active = false
         }
-        if pet.doesCollideWith(&eBullet.ent) {       // retreived ball
+        if pet.doesCollideWith(&eBullet.ent) {       // ball get
+            pet.resources[2] += desireRate[2]*1000
             eBullet.active = false
             petBall = false
         }
 
 
+        // dynamic desires
+        pet.resources[0] -= desireRate[0]
+        if pet.resources[0] <= 0.0 {
+            pet.resources[0] = 0.0
+        }
+        if pet.resources[0] >= 1.0 {
+            pet.resources[0] = 1.0
+        }
+        pet.resources[1] -= desireRate[1]
+        if pet.resources[1] <= 0.0 {
+            pet.resources[1] = 0.0
+        }
+        if pet.resources[1] >= 1.0 {
+            pet.resources[1] = 1.0
+        }
+        pet.resources[2] -= desireRate[2]
+        if pet.resources[2] <= 0.0 {
+            pet.resources[2] = 0.0
+        }
+        if pet.resources[2] >= 1.0 {
+            pet.resources[2] = 1.0
+        }
+        emoSum := (pet.resources[0] + pet.resources[1] + pet.resources[2]) / 3.0
+
+        if emoSum <= 0.0 {
+            emotion = 4    // DEAD
+        } else if emoSum < 0.3 {
+            emotion = 3
+        } else if emoSum < 0.5 {
+            emotion = 2
+        } else if emoSum < 0.7 {
+            emotion = 1
+        } else if emoSum < 0.9 {
+            emotion = 0
+        }
 
         // emotional state
         switch emotion {
         case 0:  // blissful
-            //
+            // lower desire rates
         case 1: // happy
-            //
+            // increase playful rate
         case 2: // concerned
-            //
+            // increase desire rates
         case 3: // woeful
-            //
+            // desire playful rate
         }
 
         return nil
@@ -435,7 +483,7 @@ func (s *LevelScene) updateBullets(state *GameState) error {
                 }
                 if !petBall {   // if active & at target & not started petBall yet
                     ballLanded = true  // signal landing
-                    fmt.Printf("Ball has landed\n")
+                    //fmt.Printf("Ball has landed\n")
                 }
 
                 eBullet.count -= 1    // at target so countdown to despawn
@@ -481,9 +529,12 @@ func (s *LevelScene) Draw(r *ebiten.Image) {
         case 2:
             message = fmt.Sprintf("Ball Launcher")
         }
+
+        s.drawUI(r)
+
 	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
 
-        ebitenutil.DebugPrint(r, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
+        //ebitenutil.DebugPrint(r, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
 }
 
 func (s *LevelScene) drawMap(r *ebiten.Image) {
@@ -521,22 +572,35 @@ func (s *LevelScene) drawChars(r *ebiten.Image) {
         case 3: // woeful
             r.DrawImage(pet.image, op)
         }
+}
 
-
+func (s *LevelScene) drawUI(r *ebiten.Image) {
         // Draw Pet Desire Alerts
         x, y := pet.posInt()
-        if pet.resources[0] <= 1.0 {
-	    message := fmt.Sprintf("I'm Hungry! %0.2f", pet.resources[0])
+        if pet.resources[0] <= 0.5 {
+	    message := fmt.Sprintf("I'm Hungry!")
 	    drawTextWithShadow(r, message, x-20, y-10, 1, color.NRGBA{0x80, 0, 0, 0xff})
         }
-        if pet.resources[1] <= 1.0 {
-	    message := fmt.Sprintf("Pet Me! %0.2f", pet.resources[0])
+        if pet.resources[1] <= 0.5 {
+	    message := fmt.Sprintf("Love Me!")
 	    drawTextWithShadow(r, message, x-20, y, 1, color.NRGBA{0x80, 0, 0, 0xff})
         }
-        if pet.resources[2] <= 1.0 {
-	    message := fmt.Sprintf("Let's Run! %0.2f", pet.resources[0])
+        if pet.resources[2] <= 0.5 {
+	    message := fmt.Sprintf("Play Ball!")
 	    drawTextWithShadow(r, message, x-20, y+10, 1, color.NRGBA{0x80, 0, 0, 0xff})
         }
+
+        uiSqr.Fill(color.Black)
+        op := &ebiten.DrawImageOptions{}
+        op.GeoM.Translate(0, 0)
+        r.DrawImage(uiSqr, op)
+        x, y = 5, 5
+	message := fmt.Sprintf("H: %0.2f", pet.resources[0])
+	drawTextWithShadow(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff})
+	message = fmt.Sprintf("A: %0.2f", pet.resources[1])
+	drawTextWithShadow(r, message, x, y+10, 1, color.NRGBA{0x80, 0, 0, 0xff})
+	message = fmt.Sprintf("E: %0.2f", pet.resources[2])
+	drawTextWithShadow(r, message, x, y+20, 1, color.NRGBA{0x80, 0, 0, 0xff})
 }
 
 func (s *LevelScene) drawBullets(r *ebiten.Image) {
