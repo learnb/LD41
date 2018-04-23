@@ -413,6 +413,7 @@ func (s *LevelScene) updateBullets(state *GameState) error {
                 eBullet.count -= 1    // at target so countdown to despawn
                 if eBullet.count <= 0 {   // despawned; clear
                     eBullet.active = false
+                    petBall = false
                     eBullet.ent.x, eBullet.ent.y = owner.centerPos()
                 }
             }
