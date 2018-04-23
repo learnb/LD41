@@ -5,7 +5,7 @@
 * ~~Scene transitions~~
 * ~~Title scene~~
 * Game over scene~
-* Level scene
+* ~~Level scene~~
   * ~~Tile map~~
     * ~~Tiles have passable properties~~
   * ~~Contains Pet & Owner~~
