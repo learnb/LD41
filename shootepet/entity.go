@@ -15,7 +15,7 @@
 package shootepet
 
 import (
-//        "fmt"
+        "fmt"
         "math"
 	"github.com/hajimehoshi/ebiten"
 )
@@ -80,9 +80,29 @@ func (e *Entity) moveTowardPoint(cX, cY float64) {
     e.y += normedY * e.speed
 }
 
+func (e *Entity) getVecComponents(tX, tY float64) (float64, float64) {
+    dx := tX - e.x
+    dy := tY - e.y
+
+    d := math.Sqrt( math.Pow((dx),2) + math.Pow((dy),2) )
+    if d < 0.02 {
+        d = 0.02
+    }
+    normedX := dx / d
+    normedY := dy / d
+
+    return normedX * e.speed, normedY * e.speed
+}
+
+func (e *Entity) moveByVecComponents(cX, cY float64) {
+    e.x += cX
+    e.y += cY
+}
+
 func (e *Entity) isAtPoint(cX, cY float64) bool {
     d := dist(e.x, e.y, cX, cY)
-    if d < 2.0 {
+    fmt.Printf("d: %0.2f\n", d)
+    if d < 10.0 {
         return true
     }
     return false
@@ -92,6 +112,15 @@ func (e *Entity) isAtCell(cX, cY int) bool {
     d := dist(e.x, e.y, float64(cX * tileSize), float64(cY * tileSize))
     if d < 2.0 {
         return true
+    }
+    return false
+}
+
+func (e *Entity) isOnScreen() bool {
+    if e.x >= 0.0 && e.x < ScreenWidth {
+        if e.y >= 0.0 && e.y < ScreenHeight{
+            return true
+        }
     }
     return false
 }
