@@ -37,6 +37,8 @@ var (
     pet *Entity
     petPath []int
     petTarget int
+    emotion int /* 0: Blissful -> 3: Woeful */
+    petBall bool
 
     owner *Entity
 
@@ -50,27 +52,33 @@ var (
 
 func init() {
         /* Create Characters */
-        pet = &Entity{x: 32*12, y: 32*1, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 3.0}
-        owner = &Entity{x: 32*5, y: 32*5, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 1.5}
+        pet = &Entity{x: 32*12, y: 32*1, resources: [3]float64{0.0, 0.0, 0.0}, speed: 3.0}
+        emotion = 1 // start happy
+        petBall = false
+
+        owner = &Entity{x: 32*5, y: 32*5, resources: [3]float64{0.0, 0.0, 0.0}, speed: 1.5}
         activeWeapon = 0
 
         /* Create Weapons & Ammo */
         hBullet = &Bullet{
-            ent: Entity{x: 0, y: 0, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15},
+            ent: Entity{x: 0, y: 0, resources: [3]float64{0.0, 0.0, 0.0}, speed: 15},
             vec: [2]float64{0,0},
             target: [2]float64{0,0},
+            count: 0,
             active: false,
         }
         aBullet = &Bullet{
-            ent: Entity{x: 0, y: 0, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15},
+            ent: Entity{x: 0, y: 0, resources: [3]float64{0.0, 0.0, 0.0}, speed: 15},
             vec: [2]float64{0,0},
             target: [2]float64{0,0},
+            count: 0,
             active: false,
         }
         eBullet = &Bullet{
-            ent: Entity{x: 0, y: 0, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15},
+            ent: Entity{x: 0, y: 0, resources: [3]float64{0.0, 0.0, 0.0}, speed: 15},
             vec: [2]float64{0,0},
             target: [2]float64{0,0},
+            count: 0,
             active: false,
         }
 
@@ -156,6 +164,7 @@ type Bullet struct {
         vec [2]float64
         target [2]float64
         active bool
+        count int
 }
 
 // Map Info
@@ -237,10 +246,10 @@ func (s *LevelScene) Update(state *GameState) error {
         s.updateBullets(state)
 
         // check collision
-        if hBullet.ent.doesCollideWith(pet) {
-                state.SceneManager.GoTo(&GameOverScene{})
-                return nil
-        }
+        //if hBullet.ent.doesCollideWith(pet) {
+        //        state.SceneManager.GoTo(&GameOverScene{})
+        //        return nil
+        //}
 
 
 	return nil
@@ -294,52 +303,105 @@ func (s *LevelScene) updateOwner(state *GameState) error {
 
 func (s *LevelScene) updatePet(state *GameState) error {
         px, py := mapGraph.Indx2Coord(petTarget)
-        pet.moveTowardCell(px, py)
 
-        if pet.isAtCell(px, py) {
-              // pop next cell from petPath
-              if len(petPath) >= 1 {
-                  petTarget, petPath = petPath[len(petPath)-1], petPath[:len(petPath)-1]
-              } else { // make new path
-                  // find new random destination
-                  dx, dy := rand.Intn(mapGraph.xMax-1), rand.Intn(mapGraph.yMax-1)
-                  //fmt.Printf("New Point: (%d, %d)\n", dx, dy)
-                  petPath = makeNewPetPath(dx, dy)
-              }
+        // movement
+        if petBall {    // chase ball
+            bx, by := eBullet.ent.cellPos()
+            petPath = makeNewPetPath(bx, by)            // make path to ball
+            petBall = false         // done until ball found to despawned
+            px, py := mapGraph.Indx2Coord(petTarget)
+            pet.moveTowardCell(px, py)
+        } else {        // random movement
+            pet.moveTowardCell(px, py)
+
+            if pet.isAtCell(px, py) {
+                  // pop next cell from petPath
+                  if len(petPath) >= 1 {
+                      petTarget, petPath = petPath[len(petPath)-1], petPath[:len(petPath)-1]
+                  } else { // make new path
+                      // find new random destination
+                      dx, dy := rand.Intn(mapGraph.xMax-1), rand.Intn(mapGraph.yMax-1)
+                      //fmt.Printf("New Point: (%d, %d)\n", dx, dy)
+                      petPath = makeNewPetPath(dx, dy)
+                  }
+            }
+        }
+
+        // collision
+        if pet.doesCollideWith(&hBullet.ent) {       // retreived ball
+            hBullet.active = false
+        }
+        if pet.doesCollideWith(&aBullet.ent) {       // retreived ball
+            aBullet.active = false
+        }
+        if pet.doesCollideWith(&eBullet.ent) {       // retreived ball
+            eBullet.active = false
+        }
+
+
+
+        // emotional state
+        switch emotion {
+        case 0:  // blissful
+            //
+        case 1: // happy
+            //
+        case 2: // concerned
+            //
+        case 3: // woeful
+            //
         }
 
         return nil
 }
 
 func (s *LevelScene) updateBullets(state *GameState) error {
+        // Hunger
         if hBullet.active {
             if hBullet.ent.isOnScreen() {   // not out of bounds yet
                 hBullet.ent.moveByVecComponents(hBullet.vec[0], hBullet.vec[1])
             } else {                                                    // at target; clear
-                hBullet.ent.x, hBullet.ent.y = owner.centerPos()
                 hBullet.active = false
+                hBullet.ent.x, hBullet.ent.y = owner.centerPos()
             }
         } else {  // keep bullet on owner
             hBullet.ent.x, hBullet.ent.y = owner.centerPos()
         }
-        //
+        // Attention
         if aBullet.active {
-            if aBullet.ent.isOnScreen() {   // not out of bounds yet
-                aBullet.ent.moveByVecComponents(aBullet.vec[0], aBullet.vec[1])
-            } else {                                                    // at target; clear
-                aBullet.ent.x, aBullet.ent.y = owner.centerPos()
+            // keep bullet on owner
+            aBullet.ent.x, aBullet.ent.y = owner.pos()
+            aBullet.count -= 1
+            if aBullet.count <= 0 {   // despawned; clear
                 aBullet.active = false
+                aBullet.ent.x, aBullet.ent.y = owner.pos()
             }
-        } else {  // keep bullet on owner
-            aBullet.ent.x, aBullet.ent.y = owner.centerPos()
         }
-        //
+        // Exercise
         if eBullet.active {
-            if eBullet.ent.isOnScreen() {   // not out of bounds yet
-                eBullet.ent.moveByVecComponents(eBullet.vec[0], eBullet.vec[1])
-            } else {                                                    // at target; clear
-                eBullet.ent.x, eBullet.ent.y = owner.centerPos()
-                eBullet.active = false
+            if !eBullet.ent.isAtPoint(eBullet.target[0], eBullet.target[1]) {   // not at target yet
+                eBullet.ent.moveTowardPoint(eBullet.target[0], eBullet.target[1])
+            } else {                                                    // stay until pet collision / despawn
+                // check if landing space is passable
+                dstX, dstY := eBullet.ent.cellPos()
+                if collisionMap[mapGraph.Coord2Indx(dstX, dstY)] { // if collision, change dst to a neighboring tile
+                    nl := mapGraph.getNeighbors(mapGraph.Coord2Indx(dstX, dstY))
+                    for _, v := range nl { // use first available neighbor
+                        if v != -1 {
+                            dstX, dstY = mapGraph.Indx2Coord(v)
+                            // translate from cell grid to pixels
+                            x, y := float64((dstX * tileSize) + tileSize/2), float64((dstY * tileSize) + tileSize/2)
+                            eBullet.target[0], eBullet.target[1] = x, y   // move to neighboring tile
+                        }
+                    }
+                }
+                petBall = true  // signal after landing
+
+                eBullet.count -= 1
+                if eBullet.count <= 0 {   // despawned; clear
+                    eBullet.active = false
+                    eBullet.ent.x, eBullet.ent.y = owner.centerPos()
+                }
             }
         } else {  // keep bullet on owner
             eBullet.ent.x, eBullet.ent.y = owner.centerPos()
@@ -391,15 +453,40 @@ func (s *LevelScene) drawMap(r *ebiten.Image) {
 }
 
 func (s *LevelScene) drawChars(r *ebiten.Image) {
+        // Draw Owner
         op := &ebiten.DrawImageOptions{}
-        //x, y := owner.pos()
-        //op.GeoM.Translate(float64(x), float64(y))
         op.GeoM.Translate(owner.pos())
         r.DrawImage(owner.image, op)
 
+        // Draw Pet
         op = &ebiten.DrawImageOptions{}
         op.GeoM.Translate(float64(pet.x), float64(pet.y))
-        r.DrawImage(pet.image, op)
+        switch emotion {
+        case 0:  // blissful
+            r.DrawImage(pet.image, op)
+        case 1: // happy
+            r.DrawImage(pet.image, op)
+        case 2: // concerned
+            r.DrawImage(pet.image, op)
+        case 3: // woeful
+            r.DrawImage(pet.image, op)
+        }
+
+
+        // Draw Pet Desire Alerts
+        x, y := pet.posInt()
+        if pet.resources[0] <= 1.0 {
+	    message := fmt.Sprintf("I'm Hungry! %0.2f", pet.resources[0])
+	    drawTextWithShadow(r, message, x-20, y-10, 1, color.NRGBA{0x80, 0, 0, 0xff})
+        }
+        if pet.resources[1] <= 1.0 {
+	    message := fmt.Sprintf("Pet Me! %0.2f", pet.resources[0])
+	    drawTextWithShadow(r, message, x-20, y, 1, color.NRGBA{0x80, 0, 0, 0xff})
+        }
+        if pet.resources[2] <= 1.0 {
+	    message := fmt.Sprintf("Let's Run! %0.2f", pet.resources[0])
+	    drawTextWithShadow(r, message, x-20, y+10, 1, color.NRGBA{0x80, 0, 0, 0xff})
+        }
 }
 
 func (s *LevelScene) drawBullets(r *ebiten.Image) {
@@ -479,11 +566,13 @@ func FireAt(x, y int) {
         aBullet.target[0] = float64(x)
         aBullet.target[1] = float64(y)
         aBullet.vec[0], aBullet.vec[1] = aBullet.ent.getVecComponents(aBullet.target[0], aBullet.target[1])
+        aBullet.count = 50     //set despawn counter
         aBullet.active = true
     case 2:
         eBullet.target[0] = float64(x)
         eBullet.target[1] = float64(y)
         eBullet.vec[0], eBullet.vec[1] = eBullet.ent.getVecComponents(eBullet.target[0], eBullet.target[1])
+        eBullet.count = 100     //set despawn counter
         eBullet.active = true
     }
 }

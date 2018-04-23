@@ -26,7 +26,7 @@ type Entity struct {
     w, h int
     x, y float64
     speed float64
-    resoures [3]float64
+    resources [3]float64
 }
 
 func (e *Entity) setSizeByImage() {
@@ -49,6 +49,12 @@ func (e *Entity) pos() (float64, float64) {
 
 func (e *Entity) centerPos() (float64, float64) {
     return e.x+float64(e.w)/2, e.y+float64(e.h)/2
+}
+
+func (e *Entity) cellPos() (int, int) {
+    x := int(e.x / tileSize)
+    y := int(e.y / tileSize)
+    return x, y
 }
 
 func (e *Entity) centerPosInt() (int, int) {
