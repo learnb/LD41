@@ -15,16 +15,18 @@
   * Dynamic desires (3 types: H, A, E)
   * X--'Express' emotion (via UI icon)--X
   * 'Express' emotion (via Sprite)
-* Owner~
+* ~~Owner~~
   * ~~User movement~~
-  * User shooting~
+  * ~~User shooting~~
   * ~~Ammo inventory (3 types: H, A, E)~~
   * X--Collect Ammo--X
-  * Switch weapon~
-* X--UI--X
+  * ~~Switch weapon~~
+  * ~~Collision with walls~~
+* ~~UI~~
   * X--Pet icon--X
     * X--Display Pet's emotional state--X
-    * X--Alert Pet desires--X
+    * ~~Alert Pet desires (via text)~~
+  * ~~Display Owner's weapons (via text)~~
   * X--Owner's Ammo display (3 bars: H, A, E)--X
   * X--Animated sprites (Spritesheet)--X
 

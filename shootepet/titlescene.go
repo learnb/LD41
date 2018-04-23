@@ -55,7 +55,7 @@ func anyGamepadAbstractButtonPressed(i *Input) bool {
 func (s *TitleScene) Update(state *GameState) error {
 	s.count++
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		state.SceneManager.GoTo(NewGameScene())
+		state.SceneManager.GoTo(&TutorialScene{})
 		return nil
 	}
 	if anyGamepadAbstractButtonPressed(state.Input) {

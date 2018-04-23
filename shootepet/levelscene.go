@@ -139,18 +139,18 @@ func init() {
 
         /* Get Pet moving */
         petPath = makeNewPetPath(0, 0) //Test inital fails safely
-        x, y := mapGraph.Indx2Coord(petTarget)
-        fmt.Printf("Pet target: (%d, %d)\n", x,y)
-        fmt.Printf("path length: %d\n", len(petPath))
+        //x, y := mapGraph.Indx2Coord(petTarget)
+        //fmt.Printf("Pet target: (%d, %d)\n", x,y)
+        //fmt.Printf("path length: %d\n", len(petPath))
         for _, v := range petPath {
             x, y := mapGraph.Indx2Coord(v)
             fmt.Printf("(%d, %d)\n", x,y)
         }
 
         // test pathfinding impassable
-        testl := mapGraph.getNeighbors(1)
-        fmt.Printf("Neighbors of 1: %d %d %d %d\n", testl[0], testl[1], testl[2], testl[3])
-        fmt.Printf("Neighbors real: %d %d %d %d\n", -1, 2, -1, 16)
+        //testl := mapGraph.getNeighbors(1)
+        //fmt.Printf("Neighbors of 1: %d %d %d %d\n", testl[0], testl[1], testl[2], testl[3])
+        //fmt.Printf("Neighbors real: %d %d %d %d\n", -1, 2, -1, 16)
 }
 
 func  (s *LevelScene) Init() {
@@ -258,6 +258,8 @@ func (s *LevelScene) Update(state *GameState) error {
 }
 
 func (s *LevelScene) updateOwner(state *GameState) error {
+
+
         // movement input
         targetX, targetY := owner.pos()
 
@@ -274,7 +276,33 @@ func (s *LevelScene) updateOwner(state *GameState) error {
                 targetX += owner.speed
         }
 
-        owner.moveTowardPoint(targetX, targetY)
+        // wall collision - check target is not a wall
+        // cheat by bringing in bounding box a bit
+        buff := 3.0
+        wallStop := false
+        cx, cy := Point2MapCell(targetX+buff, targetY+buff)
+        if collisionMap[mapGraph.Coord2Indx(cx, cy)] { // top left
+            wallStop = true
+        }
+        cx, cy = Point2MapCell(targetX+buff, targetY+float64(owner.h)-buff)
+        if collisionMap[mapGraph.Coord2Indx(cx, cy)] { // bottom left
+            wallStop = true
+        }
+        cx, cy = Point2MapCell(targetX+float64(owner.w)-buff, targetY+buff)
+        if collisionMap[mapGraph.Coord2Indx(cx, cy)] { // top right
+            wallStop = true
+        }
+        cx, cy = Point2MapCell(targetX+float64(owner.w)-buff, targetY+float64(owner.h)-buff)
+        if collisionMap[mapGraph.Coord2Indx(cx, cy)] { // botttom right
+            wallStop = true
+        }
+
+        if !wallStop {
+            owner.moveTowardPoint(targetX, targetY)
+        } else { // do nothing
+            //owner.moveTowardPoint(-1*(targetX), -1*(targetY))
+        }
+
 
         // action input
         if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) { // shoot
@@ -444,7 +472,15 @@ func (s *LevelScene) Draw(r *ebiten.Image) {
         /* Draw Bullets */
         s.drawBullets(r)
 
-	message = fmt.Sprintf("Dist: %0.2f", owner.distanceTo(pet))
+        /* Display current weapon */
+        switch activeWeapon {
+        case 0:
+            message = fmt.Sprintf("Food Blaster")
+        case 1:
+            message = fmt.Sprintf("Love Bomb")
+        case 2:
+            message = fmt.Sprintf("Ball Launcher")
+        }
 	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
 
         ebitenutil.DebugPrint(r, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
