@@ -39,13 +39,11 @@ var (
     petTarget int
 
     owner *Entity
+
+    hBullet *Bullet
+    aBullet *Bullet
+    eBullet *Bullet
     activeWeapon int
-    hBullet *Entity
-    aBullet *Entity
-    eBullet *Entity
-    bulletVec [2]float64
-    bulletTarget [2]float64
-    bulletActive bool
 )
 
 
@@ -57,10 +55,24 @@ func init() {
         activeWeapon = 0
 
         /* Create Weapons & Ammo */
-        hBullet = &Entity{x: 32*5, y: 32*5, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15}
-        aBullet = &Entity{x: 32*5, y: 32*5, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15}
-        eBullet = &Entity{x: 32*5, y: 32*5, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15}
-        bulletActive = false
+        hBullet = &Bullet{
+            ent: Entity{x: 0, y: 0, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15},
+            vec: [2]float64{0,0},
+            target: [2]float64{0,0},
+            active: false,
+        }
+        aBullet = &Bullet{
+            ent: Entity{x: 0, y: 0, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15},
+            vec: [2]float64{0,0},
+            target: [2]float64{0,0},
+            active: false,
+        }
+        eBullet = &Bullet{
+            ent: Entity{x: 0, y: 0, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 15},
+            vec: [2]float64{0,0},
+            target: [2]float64{0,0},
+            active: false,
+        }
 
         /* Preload Sprites */
 	img, _, err := image.Decode(bytes.NewReader(rshootepet.Tiles_png))
@@ -83,26 +95,29 @@ func init() {
 	pet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
         pet.setSizeByImage()
 
+        // Hunger Bullet
         img, _, err = image.Decode(bytes.NewReader(rshootepet.Bullet_png))
 	if err != nil {
 		panic(err)
 	}
-	hBullet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-        hBullet.setSizeByImage()
+	hBullet.ent.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        hBullet.ent.setSizeByImage()
 
-        img, _, err = image.Decode(bytes.NewReader(rshootepet.Bullet_png))
+        // Attention Bullet
+        img, _, err = image.Decode(bytes.NewReader(rshootepet.BulletA_png))
 	if err != nil {
 		panic(err)
 	}
-	aBullet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-        aBullet.setSizeByImage()
+	aBullet.ent.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        aBullet.ent.setSizeByImage()
 
-        img, _, err = image.Decode(bytes.NewReader(rshootepet.Bullet_png))
+        // Exercise Bullet
+        img, _, err = image.Decode(bytes.NewReader(rshootepet.BulletE_png))
 	if err != nil {
 		panic(err)
 	}
-	eBullet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-        eBullet.setSizeByImage()
+	eBullet.ent.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        eBullet.ent.setSizeByImage()
 
 
 
@@ -134,6 +149,13 @@ func  (s *LevelScene) Init() {
 
 type LevelScene struct {
 	count int
+}
+
+type Bullet struct {
+        ent Entity
+        vec [2]float64
+        target [2]float64
+        active bool
 }
 
 // Map Info
@@ -200,13 +222,13 @@ func (s *LevelScene) Update(state *GameState) error {
         //}
 
 
-        if state.Input.TriggeredMain() {
-                pet.moveTowardCell(1,1)
-                return nil
-        }
+        //if state.Input.TriggeredMain() {
+        //        pet.moveTowardCell(1,1)
+        //        return nil
+        //}
 
         // update owner
-        s.updateOwner(state)
+        s.updateOwner(state)  // handles user input
 
         // update pet
         s.updatePet(state)
@@ -215,7 +237,7 @@ func (s *LevelScene) Update(state *GameState) error {
         s.updateBullets(state)
 
         // check collision
-        if hBullet.doesCollideWith(pet) {
+        if hBullet.ent.doesCollideWith(pet) {
                 state.SceneManager.GoTo(&GameOverScene{})
                 return nil
         }
@@ -246,8 +268,20 @@ func (s *LevelScene) updateOwner(state *GameState) error {
         // action input
         if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) { // shoot
                 x, y := ebiten.CursorPosition()
-                if !bulletActive { // cannot shoot until bullet 'dies'
-                    FireAt(x, y) //units in screen pixels
+                switch activeWeapon {
+                case 0:
+                    if !hBullet.active { // cannot shoot until bullet 'dies'
+                        FireAt(x, y) //units in screen pixels
+                    }
+                case 1:
+                    if !aBullet.active { // cannot shoot until bullet 'dies'
+                        FireAt(x, y) //units in screen pixels
+                    }
+                case 2:
+                    if !eBullet.active { // cannot shoot until bullet 'dies'
+                        FireAt(x, y) //units in screen pixels
+                    }
+
                 }
         }
         if state.Input.TriggeredSecondary() { // change weaspon
@@ -278,16 +312,39 @@ func (s *LevelScene) updatePet(state *GameState) error {
 }
 
 func (s *LevelScene) updateBullets(state *GameState) error {
-    if bulletActive {
-        if hBullet.isOnScreen() {   // not out of bounds yet
-            hBullet.moveByVecComponents(bulletVec[0], bulletVec[1])
-        } else {                                                    // at target; clear
-            hBullet.x, hBullet.y = owner.centerPos()
-            bulletActive = false
+        if hBullet.active {
+            if hBullet.ent.isOnScreen() {   // not out of bounds yet
+                hBullet.ent.moveByVecComponents(hBullet.vec[0], hBullet.vec[1])
+            } else {                                                    // at target; clear
+                hBullet.ent.x, hBullet.ent.y = owner.centerPos()
+                hBullet.active = false
+            }
+        } else {  // keep bullet on owner
+            hBullet.ent.x, hBullet.ent.y = owner.centerPos()
         }
-    } else {                                                        // keep bullet "on" owner
-        hBullet.x, hBullet.y = owner.centerPos()
-    }
+        //
+        if aBullet.active {
+            if aBullet.ent.isOnScreen() {   // not out of bounds yet
+                aBullet.ent.moveByVecComponents(aBullet.vec[0], aBullet.vec[1])
+            } else {                                                    // at target; clear
+                aBullet.ent.x, aBullet.ent.y = owner.centerPos()
+                aBullet.active = false
+            }
+        } else {  // keep bullet on owner
+            aBullet.ent.x, aBullet.ent.y = owner.centerPos()
+        }
+        //
+        if eBullet.active {
+            if eBullet.ent.isOnScreen() {   // not out of bounds yet
+                eBullet.ent.moveByVecComponents(eBullet.vec[0], eBullet.vec[1])
+            } else {                                                    // at target; clear
+                eBullet.ent.x, eBullet.ent.y = owner.centerPos()
+                eBullet.active = false
+            }
+        } else {  // keep bullet on owner
+            eBullet.ent.x, eBullet.ent.y = owner.centerPos()
+        }
+
     return nil
 }
 
@@ -346,12 +403,25 @@ func (s *LevelScene) drawChars(r *ebiten.Image) {
 }
 
 func (s *LevelScene) drawBullets(r *ebiten.Image) {
-        if bulletActive {
-            op := &ebiten.DrawImageOptions{}
-            //x, y := owner.pos()
-            //op.GeoM.Translate(float64(x), float64(y))
-            op.GeoM.Translate(hBullet.pos())
-            r.DrawImage(hBullet.image, op)
+        switch activeWeapon {
+        case 0:
+            if hBullet.active {
+                op := &ebiten.DrawImageOptions{}
+                op.GeoM.Translate(hBullet.ent.pos())
+                r.DrawImage(hBullet.ent.image, op)
+            }
+        case 1:
+            if aBullet.active {
+                op := &ebiten.DrawImageOptions{}
+                op.GeoM.Translate(aBullet.ent.pos())
+                r.DrawImage(aBullet.ent.image, op)
+            }
+        case 2:
+            if eBullet.active {
+                op := &ebiten.DrawImageOptions{}
+                op.GeoM.Translate(eBullet.ent.pos())
+                r.DrawImage(eBullet.ent.image, op)
+            }
         }
 }
 
@@ -399,10 +469,23 @@ func makeNewPetPath(dstX, dstY int) []int {
 /* Owner Helper Functions */
 
 func FireAt(x, y int) {
-    bulletActive = true
-    bulletTarget[0] = float64(x)
-    bulletTarget[1] = float64(y)
-    bulletVec[0], bulletVec[1] = hBullet.getVecComponents(bulletTarget[0], bulletTarget[1])
+    switch activeWeapon {
+    case 0:
+        hBullet.target[0] = float64(x)
+        hBullet.target[1] = float64(y)
+        hBullet.vec[0], hBullet.vec[1] = hBullet.ent.getVecComponents(hBullet.target[0], hBullet.target[1])
+        hBullet.active = true
+    case 1:
+        aBullet.target[0] = float64(x)
+        aBullet.target[1] = float64(y)
+        aBullet.vec[0], aBullet.vec[1] = aBullet.ent.getVecComponents(aBullet.target[0], aBullet.target[1])
+        aBullet.active = true
+    case 2:
+        eBullet.target[0] = float64(x)
+        eBullet.target[1] = float64(y)
+        eBullet.vec[0], eBullet.vec[1] = eBullet.ent.getVecComponents(eBullet.target[0], eBullet.target[1])
+        eBullet.active = true
+    }
 }
 
 func RotateWeapons() {

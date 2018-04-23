@@ -13,19 +13,20 @@
 * Pet~
   * ~~Automatic movement~~
   * Dynamic desires (3 types: H, A, E)
-  * 'Express' emotion (via UI icon)
+  * X--'Express' emotion (via UI icon)--X
+  * 'Express' emotion (via Sprite)
 * Owner~
   * ~~User movement~~
-  * User shooting
+  * User shooting~
   * ~~Ammo inventory (3 types: H, A, E)~~
-  * Collect Ammo
-  * Switch weapon
-* UI
-  * Pet icon
-    * Display Pet's emotional state
-    * Alert Pet desires
-  * Owner's Ammo display (3 bars: H, A, E)
-  * Animated sprites (Spritesheet)
+  * X--Collect Ammo--X
+  * Switch weapon~
+* X--UI--X
+  * X--Pet icon--X
+    * X--Display Pet's emotional state--X
+    * X--Alert Pet desires--X
+  * X--Owner's Ammo display (3 bars: H, A, E)--X
+  * X--Animated sprites (Spritesheet)--X
 
 ## Assests
 
