@@ -65,10 +65,10 @@ func (s *TitleScene) Update(state *GameState) error {
 
 	// If 'abstract' gamepad buttons are not set and any gamepad buttons are pressed,
 	// go to the gamepad configuration scene.
-	if state.Input.IsAnyGamepadButtonPressed() {
-		state.SceneManager.GoTo(&GamepadScene{})
-		return nil
-	}
+//	if state.Input.IsAnyGamepadButtonPressed() {
+//		state.SceneManager.GoTo(&GamepadScene{})
+//		return nil
+//	}
 	return nil
 }
 

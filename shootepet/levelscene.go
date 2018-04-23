@@ -32,11 +32,12 @@ import (
 
 var (
     tilesImage *ebiten.Image
-    pet *Entity
-    owner *Entity
     mapGraph *Graph
+    pet *Entity
     petPath []int
     petTarget int
+    owner *Entity
+    activeWeapon int
 )
 
 
@@ -45,6 +46,7 @@ func init() {
         /* Create Characters */
         pet = &Entity{x: 32*12, y: 32*1, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 3.0}
         owner = &Entity{x: 32*5, y: 32*5, resoures: [3]float64{0.0, 0.0, 0.0}, speed: 1.5}
+        activeWeapon = 0
 
         /* Preload Sprites */
 	img, _, err := image.Decode(bytes.NewReader(rshootepet.Tiles_png))
@@ -68,17 +70,24 @@ func init() {
         pet.setSizeByImage()
 
         /* Define Graph */
+        tileprops = buildTileProps()
         mapGraph = &Graph{graph: tileprops, xMax: 15, yMax: 10}
-
+        buildCollisionMap()
 
         /* Get Pet moving */
         petPath = makeNewPetPath(0, 0) //Test inital fails safely
         x, y := mapGraph.Indx2Coord(petTarget)
         fmt.Printf("Pet target: (%d, %d)\n", x,y)
+        fmt.Printf("path length: %d\n", len(petPath))
         for _, v := range petPath {
             x, y := mapGraph.Indx2Coord(v)
             fmt.Printf("(%d, %d)\n", x,y)
         }
+
+        // test pathfinding impassable
+        testl := mapGraph.getNeighbors(1)
+        fmt.Printf("Neighbors of 1: %d %d %d %d\n", testl[0], testl[1], testl[2], testl[3])
+        fmt.Printf("Neighbors real: %d %d %d %d\n", -1, 2, -1, 16)
 }
 
 func  (s *LevelScene) Init() {
@@ -100,30 +109,17 @@ var (
         tilelayers = [][]int{ /* ints represent index of reshootepet.Tiles_png */
                 /* First Layer - Main */
                 {
-                    9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    9, 5, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 9,
-                    9, 5, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 9,
-                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    1, 1, 1, 1, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 9,
-                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9,
+                    9, 1, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 9, 9, 9,
+                    9, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 5, 1, 9,
+                    9, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 9,
+                    9, 1, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 9,
+                    9, 1, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 9,
+                    9, 1, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 9,
+                    9, 5, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 9,
+                    1, 1, 1, 1, 1, 4, 5, 5, 5, 5, 3, 5, 5, 5, 9,
+                    9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 1, 1, 9,
                     9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
                 },
-                /* Second Layer - Top */
-               /* {
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, 7, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, 7, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                },*/
         }
         tileprops = []int { /* ints represent tile property booleans */
                 /* Tile properties:
@@ -132,37 +128,38 @@ var (
                     2: bullet-passable
                     3: character-passable
                 */
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 }
         collisionMap = map[int]bool{}
 )
 
-func buildPropMap() {
-        const xNum = ScreenWidth / tileSize
-        for i, l := range tileprops {
-                if l != 0 {
+func buildCollisionMap() {
+        for i, v := range tileprops {
+                if v != 0 {
                         collisionMap[i] = true
                 }
         }
+}
+
+func buildTileProps() []int {
+        a := make([]int, len(tilelayers[0]))
+        for i, v := range tilelayers[0] {
+                if v == 1 || v == 4 || v == 3  { // if node is impassable
+                        a[i] = 1
+                } else {
+                        a[i] = 0
+                }
+        }
+        return a
 }
 
 /* Update */
 
 func (s *LevelScene) Update(state *GameState) error {
         // check of game over
-        if state.Input.TriggeredSecondary() {
-                state.SceneManager.GoTo(&GameOverScene{})
-                return nil
-        }
+        //if state.Input.TriggeredSecondary() {
+        //        state.SceneManager.GoTo(&GameOverScene{})
+        //        return nil
+        //}
 
 
         if state.Input.TriggeredMain() {
@@ -181,10 +178,12 @@ func (s *LevelScene) Update(state *GameState) error {
                 return nil
         }
 
+
 	return nil
 }
 
 func (s *LevelScene) updateOwner(state *GameState) error {
+        // movement input
         targetX, targetY := owner.pos()
 
         if state.Input.StateForUp() > 0 {
@@ -202,6 +201,15 @@ func (s *LevelScene) updateOwner(state *GameState) error {
 
         owner.moveTowardPoint(targetX, targetY)
 
+        // action input
+        if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) { // shoot
+                x, y := ebiten.CursorPosition()
+                FireAt(x, y) //units in screen pixels
+        }
+        if state.Input.TriggeredSecondary() { // change weaspon
+                RotateWeapons()
+        }
+
         return nil
 }
 
@@ -217,7 +225,7 @@ func (s *LevelScene) updatePet(state *GameState) error {
               } else { // make new path
                   // find new random destination
                   dx, dy := rand.Intn(mapGraph.xMax-1), rand.Intn(mapGraph.yMax-1)
-                  fmt.Printf("New Point: (%d, %d)\n", dx, dy)
+                  //fmt.Printf("New Point: (%d, %d)\n", dx, dy)
                   petPath = makeNewPetPath(dx, dy)
               }
         }
@@ -289,9 +297,22 @@ func Point2MapCell(x, y float64) (int, int) {
     return cX, cY
 }
 
+/* Pet Helper Functions */
+
 func makeNewPetPath(dstX, dstY int) []int {
     px, py := pet.pos()
     cx, cy := Point2MapCell(px, py)
+
+    // check if dst is impassable
+    if collisionMap[mapGraph.Coord2Indx(dstX, dstY)] { // if collision, change dst to a neighboring tile
+        nl := mapGraph.getNeighbors(mapGraph.Coord2Indx(dstX, dstY))
+        for _, v := range nl { // use first available neighbor
+            if v != -1 {
+                dstX, dstY = mapGraph.Indx2Coord(v)
+            }
+        }
+    }
+
     l := mapGraph.Astar( mapGraph.Coord2Indx(cx, cy), mapGraph.Coord2Indx(dstX, dstY) )
     if len(l) >= 1 {
         _, l = l[len(l)-1], l[:len(l)-1]            // pop src (current) node
@@ -300,4 +321,20 @@ func makeNewPetPath(dstX, dstY int) []int {
         petTarget, l = l[len(l)-1], l[:len(l)-1]    // pop & set next node
     }
     return l
+}
+
+
+/* Owner Helper Functions */
+
+func FireAt(x, y int) {
+    owner.moveTowardPoint(float64(x), float64(y))
+    fmt.Printf("W: %d", activeWeapon)
+}
+
+func RotateWeapons() {
+    if activeWeapon < 2 {
+        activeWeapon += 1
+    } else {
+        activeWeapon = 0
+    }
 }
