@@ -24,7 +24,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten"
 	//"github.com/hajimehoshi/ebiten/inpututil"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	//"github.com/hajimehoshi/ebiten/ebitenutil"
 	rshootepet "github.com/learnb/ld41/resources/images/shootepet"
 )
 
@@ -32,6 +32,10 @@ import (
 
 var (
     uiSqr *ebiten.Image
+    blissfulImage *ebiten.Image
+    happyImage *ebiten.Image
+    concernedImage *ebiten.Image
+    woefulImage *ebiten.Image
     tilesImage *ebiten.Image
     mapGraph *Graph
 
@@ -59,7 +63,7 @@ func myInit() {
         /* Create Characters */
         pet = &Entity{x: 32*12, y: 32*1, resources: [3]float64{1.0, 1.0, 1.0}, speed: 3.0}
         desireRate = [3]float64{0.001, 0.001, 0.001}
-        emotion = 1 // start happy
+        emotion = 0 // start blissful
         petBall = false
         ballLanded = false
 
@@ -96,6 +100,7 @@ func myInit() {
 	}
 	tilesImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
 
+        // owner
         img, _, err = image.Decode(bytes.NewReader(rshootepet.Owner_png))
 	if err != nil {
 		panic(err)
@@ -103,12 +108,29 @@ func myInit() {
 	owner.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
         owner.setSizeByImage()
 
-        img, _, err = image.Decode(bytes.NewReader(rshootepet.Pet_png))
+        // pet
+        img, _, err = image.Decode(bytes.NewReader(rshootepet.Blissful_png))
 	if err != nil {
 		panic(err)
 	}
-	pet.image, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-        pet.setSizeByImage()
+	blissfulImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        img, _, err = image.Decode(bytes.NewReader(rshootepet.Happy_png))
+	if err != nil {
+		panic(err)
+	}
+	happyImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        img, _, err = image.Decode(bytes.NewReader(rshootepet.Concerned_png))
+	if err != nil {
+		panic(err)
+	}
+	concernedImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        img, _, err = image.Decode(bytes.NewReader(rshootepet.Woeful_png))
+	if err != nil {
+		panic(err)
+	}
+	woefulImage, _ = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+        //pet.setSizeByImage()
+        pet.w, pet.h = 32, 32
 
         // UI
         uiSqr, _ = ebiten.NewImage(65, 35, ebiten.FilterDefault)
@@ -375,15 +397,18 @@ func (s *LevelScene) updatePet(state *GameState) error {
         }
 
         // collision
-        if pet.doesCollideWith(&hBullet.ent) {       // food get
+        if pet.doesCollideWith(&hBullet.ent) && hBullet.active {       // food get
+            fmt.Println("hit H")
             pet.resources[0] += desireRate[0]*1000
             hBullet.active = false
         }
-        if pet.doesCollideWith(&aBullet.ent) {       // love get
+        if pet.doesCollideWith(&aBullet.ent) && aBullet.active {       // love get
+            fmt.Println("hit A")
             pet.resources[1] += desireRate[1]*1000
             aBullet.active = false
         }
-        if pet.doesCollideWith(&eBullet.ent) {       // ball get
+        if pet.doesCollideWith(&eBullet.ent) && eBullet.active {       // ball get
+            fmt.Println("hit E")
             pet.resources[2] += desireRate[2]*1000
             eBullet.active = false
             petBall = false
@@ -437,6 +462,7 @@ func (s *LevelScene) updatePet(state *GameState) error {
         case 3: // woeful
             // desire playful rate
         }
+
 
         return nil
 }
@@ -505,11 +531,11 @@ func (s *LevelScene) updateBullets(state *GameState) error {
 
 func (s *LevelScene) Draw(r *ebiten.Image) {
         /* Debug */
-        ebitenutil.DebugPrint(r, "\nNothing here yet :(")
-	message := "~ Level Scene ~"
+        //ebitenutil.DebugPrint(r, "\nNothing here yet :(")
+	message := ""
 	x := 0
 	y := ScreenHeight - 48
-	drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
+	//drawTextWithShadowCenter(r, message, x, y, 1, color.NRGBA{0x80, 0, 0, 0xff}, ScreenWidth)
 
         /* Draw Map */
         s.drawMap(r)
@@ -562,16 +588,20 @@ func (s *LevelScene) drawChars(r *ebiten.Image) {
         // Draw Pet
         op = &ebiten.DrawImageOptions{}
         op.GeoM.Translate(float64(pet.x), float64(pet.y))
+
+        // change pet image
         switch emotion {
         case 0:  // blissful
-            r.DrawImage(pet.image, op)
+            r.DrawImage(blissfulImage, op)
         case 1: // happy
-            r.DrawImage(pet.image, op)
+            r.DrawImage(happyImage, op)
         case 2: // concerned
-            r.DrawImage(pet.image, op)
+            r.DrawImage(concernedImage, op)
         case 3: // woeful
-            r.DrawImage(pet.image, op)
+            r.DrawImage(woefulImage, op)
         }
+
+
 }
 
 func (s *LevelScene) drawUI(r *ebiten.Image) {
