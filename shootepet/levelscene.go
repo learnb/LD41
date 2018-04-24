@@ -210,7 +210,7 @@ var (
         tilelayers = [][]int{ /* ints represent index of reshootepet.Tiles_png */
                 /* First Layer - Main */
                 {
-                    9, 1, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 9, 9, 9,
+                    1, 1, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 9, 9, 9,
                     9, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 5, 1, 9,
                     9, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 9,
                     9, 1, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 9,
@@ -333,6 +333,22 @@ func (s *LevelScene) updateOwner(state *GameState) error {
         if collisionMap[mapGraph.Coord2Indx(cx, cy)] { // botttom right
             wallStop = true
         }
+
+        // check outer edges
+        if targetX+buff < 0 { // left
+            wallStop = true
+        }
+        if targetX-buff > ScreenWidth { // right
+            wallStop = true
+        }
+        if targetY+buff < 0 { // top
+            wallStop = true
+        }
+        if targetY-buff > ScreenHeight { // botttom
+            wallStop = true
+        }
+
+
 
         if !wallStop {
             owner.moveTowardPoint(targetX, targetY)
