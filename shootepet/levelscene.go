@@ -414,17 +414,17 @@ func (s *LevelScene) updatePet(state *GameState) error {
 
         // collision
         if pet.doesCollideWith(&hBullet.ent) && hBullet.active {       // food get
-            fmt.Println("hit H")
+            //fmt.Println("hit H")
             pet.resources[0] += desireRate[0]*1000
             hBullet.active = false
         }
         if pet.doesCollideWith(&aBullet.ent) && aBullet.active {       // love get
-            fmt.Println("hit A")
+            //fmt.Println("hit A")
             pet.resources[1] += desireRate[1]*1000
             aBullet.active = false
         }
         if pet.doesCollideWith(&eBullet.ent) && eBullet.active {       // ball get
-            fmt.Println("hit E")
+            //fmt.Println("hit E")
             pet.resources[2] += desireRate[2]*1000
             eBullet.active = false
             petBall = false
@@ -493,16 +493,22 @@ func (s *LevelScene) updateBullets(state *GameState) error {
                 hBullet.ent.x, hBullet.ent.y = owner.centerPos()
             }
         } else {  // keep bullet on owner
-            hBullet.ent.x, hBullet.ent.y = owner.centerPos()
+            hBullet.ent.x, hBullet.ent.y = owner.pos()
+            //hBullet.ent.x -= 10
+            //hBullet.ent.y -= 10
         }
         // Attention
         if aBullet.active {
             // keep bullet on owner
             aBullet.ent.x, aBullet.ent.y = owner.pos()
+            aBullet.ent.x -= 10
+            aBullet.ent.y -= 10
             aBullet.count -= 1
             if aBullet.count <= 0 {   // despawned; clear
                 aBullet.active = false
                 aBullet.ent.x, aBullet.ent.y = owner.pos()
+                aBullet.ent.x -= 10
+                aBullet.ent.y += 10
             }
         }
         // Exercise
